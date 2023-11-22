@@ -1,0 +1,37 @@
+{
+    "name": "honghm/easy_alipay",
+    "description": "支付宝SDK",
+    "type": "library",
+    "require": {
+        "php": ">=8.0.2",
+        "ext-mbstring": "*",
+        "ext-ctype": "*",
+        "psr/http-client": "^1.0",
+        "psr/http-message": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "mockery/mockery": "^1.4",
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "phpstan/phpstan": "^1.0.0",
+        "monolog/monolog": "^2.2",
+        "symfony/var-dumper": "^5.1",
+        "symfony/http-foundation": "^5.2.0",
+        "symfony/event-dispatcher": "^5.2.0",
+        "symfony/psr-http-message-bridge": "^2.1",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Honghm\\EasyAlipay\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "honghm",
+            "email": "honghua1207@sina.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
