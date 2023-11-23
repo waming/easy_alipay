@@ -28,12 +28,6 @@ interface ApplicationInterface
     public function getRequest(): RequestInterface;
 
     /**
-     * 获取response
-     * @return ResponseInterface
-     */
-    public function getResponse(): responseInterface;
-
-    /**
      * 获取http client
      * @return ClientInterface
      */
