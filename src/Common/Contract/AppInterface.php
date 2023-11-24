@@ -30,7 +30,7 @@ interface AppInterface
      * 应用公钥证书路径
      * @return string
      */
-    public function getPublicCertPath(): string;
+    public function getAppPublicCertPath(): string;
 
     /**
      * 支付宝公钥证书路径

@@ -6,11 +6,10 @@ namespace Honghm\EasyAlipay\Common\Support;
 function array2string(array $array) : string
 {
     $string = [];
-    if ($array) {
-        foreach ($array as $key => $value) {
-            $string[] = $key . '=' . $value;
-        }
+    foreach ($array as $key => $value) {
+        $string[] = $key.'='.$value;
     }
+
     return implode(',', $string);
 }
 
@@ -21,10 +20,16 @@ function array2string(array $array) : string
  */
 function hex2dec($hex): int|string
 {
-    $dec = 0;
+    $dec = '0';
     $len = strlen($hex);
-    for ($i = 1; $i <= $len; $i++) {
-        $dec = bcadd((string)$dec, bcmul(strval(hexdec($hex[$i - 1])), bcpow('16', strval($len - $i))));
+
+    for ($i = 1; $i <= $len; ++$i) {
+        $dec = bcadd(
+            $dec,
+            bcmul(strval(hexdec($hex[$i - 1])), bcpow('16', strval($len - $i), 0), 0),
+            0
+        );
     }
+
     return $dec;
 }

@@ -4,9 +4,10 @@ declare(strict_types=1);
 namespace Honghm\EasyAlipay\Common;
 
 use Honghm\EasyAlipay\Common\Contract\ConfigInterface;
+use Honghm\EasyAlipay\Common\Contract\AppInterface;
 use Honghm\EasyAlipay\Common\Exception\InvalidConfigException;
 
-class App implements Contract\AppInterface
+class App implements AppInterface
 {
     public function __construct(public ConfigInterface $config)
     {}
@@ -48,9 +49,9 @@ class App implements Contract\AppInterface
     /**
      * @inheritDoc
      */
-    public function getPublicCertPath(): string
+    public function getAppPublicCertPath(): string
     {
-        return $this->config->get('publicCertPath');
+        return $this->config->get('appPublicCertPath');
     }
 
     /**
