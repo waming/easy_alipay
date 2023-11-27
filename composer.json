@@ -2,6 +2,13 @@
     "name": "honghm/easy_alipay",
     "description": "支付宝SDK",
     "type": "library",
+    "keywords": [
+        "easyalipay",
+        "alipay",
+        "openalipay",
+        "alipay-sdk",
+        "sdk"
+    ],
     "require": {
         "php": ">=8.0.2",
         "ext-openssl": "*",
