@@ -14,6 +14,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class Application implements ApplicationInterface
 {
@@ -22,6 +23,8 @@ class Application implements ApplicationInterface
     protected ?RequestInterface $request = null;
 
     protected ?ClientInterface $client = null;
+
+    protected ?ResponseInterface $response = null;
 
     public function __construct(public array $config = [])
     {}
@@ -50,7 +53,7 @@ class Application implements ApplicationInterface
         return $this->request;
     }
 
-    protected function setRequest(RequestInterface $request): static
+    public function setRequest(RequestInterface $request): static
     {
         $this->request = $request;
         return $this;
@@ -67,6 +70,9 @@ class Application implements ApplicationInterface
         return $creator->fromGlobals();
     }
 
+    /**
+     * @throws Common\Exception\InvalidConfigException
+     */
     public function getHttpClient(): ClientInterface
     {
         if (empty($this->client)) {
@@ -78,9 +84,10 @@ class Application implements ApplicationInterface
     /**
      * 使用guzzlehttp客户端
      * @return ClientInterface
+     * @throws Common\Exception\InvalidConfigException
      */
     protected function createDefaultHttpClient() : ClientInterface
     {
-        return new HttpClient($this->getApp());
+        return new HttpClient($this);
     }
 }

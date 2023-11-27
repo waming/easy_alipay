@@ -7,6 +7,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Request;
 use Honghm\EasyAlipay\Common\Contract\AppInterface;
+use Honghm\EasyAlipay\Common\Contract\ApplicationInterface;
 use Honghm\EasyAlipay\Common\Exception\InvalidParamException;
 use Honghm\EasyAlipay\Common\Support\Utils;
 use Psr\Http\Client\ClientExceptionInterface;
@@ -17,6 +18,8 @@ use Psr\Http\Message\ResponseInterface;
 class HttpClient implements PsrClientInterface
 {
     protected ClientInterface $client;
+
+    protected AppInterface $app;
 
     /*
      * 系统请求参数，生成的链接中会自动添加这些参数
@@ -36,38 +39,52 @@ class HttpClient implements PsrClientInterface
         'Accept'       => 'application/json'
     ];
 
+    public function __construct(protected ApplicationInterface $application)
+    {
+        $config = $application->getConfig()->get('http');
+        $config['headers'] = array_merge($this->defaultHeaders, $config['headers'] ?? []);
+        $this->app = $this->application->getApp();
+        $this->client = new Client($config);
+    }
+
     /**
+     * 适用于生成页面的接口。比如支付宝的手机网站支付
      * @throws Exception\InvalidConfigException
      */
-    public function __construct(protected AppInterface $app)
+    public function getPageResponse(string $apiName, array $data, string $method = 'GET') : ResponseInterface
     {
-        $config = $app->config->get('http');
-        $config['headers'] = array_merge($this->defaultHeaders, $config['headers'] ?? []);
-        $this->client = new Client($config);
-        $this->createDefaultSysApiParams();
+        if('GET' === strtoupper($method)) {
+            $query = $this->getRequestBody(array_merge($data, $this->getApiParams($apiName, $data)));
+            $uri = $this->app->config->get('http')['base_uri'].'?'.$query;
+            return Response::create(302, ['Location' => $uri]);
+        } else {
+            return $this->buildHtml($apiName, $data);
+        }
     }
 
     /**
      * @throws Exception\InvalidConfigException
      */
-    protected function createDefaultSysApiParams() : void
+    protected function buildHtml(string $apiName, array $data): ResponseInterface
     {
-        $this->sysApiParams['app_id']    = $this->app->getAppId();
-        $this->sysApiParams['timestamp'] = date('Y-m-d H:i:s');
-        $this->sysApiParams['notify_url'] = $this->app->config->get('notify_url');
+        $gateWay = $this->application->getConfig()->get('http')['base_uri'].'?charset='.$this->sysApiParams['charset'];
+        $params  = array_merge($this->getApiParams($apiName, $data), $data);
 
-        /**
-         * 公钥证书方式
-         */
-        if(!empty($this->app->getAppPublicCertPath()) && !empty($this->app->getAlipayRootCertPath())) {
-            $this->sysApiParams['app_cert_sn']         = Utils::getAppCertSN($this->app->getAppPublicCertPath());
-            $this->sysApiParams['alipay_root_cert_sn'] = Utils::getRootCertSN($this->app->getAlipayRootCertPath());
+        $sHtml = "<form id='alipay_submit' name='alipay_submit' action='".$gateWay."' method='POST'>";
+        foreach ($params as $key => $val) {
+            $val = str_replace("'", '&apos;', (string)$val);
+            $sHtml .= "<input type='hidden' name='".$key."' value='".$val."'/>";
         }
+        $sHtml .= "<input type='submit' value='ok' style='display:none;'></form>";
+        $sHtml .= "<script>document.forms['alipay_submit'].submit();</script>";
+
+        return Response::create(200, [], $sHtml);
     }
 
     /**
      * @throws ClientExceptionInterface
      * @throws InvalidParamException
+     * @throws Exception\InvalidConfigException
      */
     public function get(string $apiName, array $data = [], array $headers = []) : ResponseInterface
     {
@@ -77,6 +94,7 @@ class HttpClient implements PsrClientInterface
     /**
      * @throws ClientExceptionInterface
      * @throws InvalidParamException
+     * @throws Exception\InvalidConfigException
      */
     public function post(string $apiName, array $data = [], array $headers = []) : ResponseInterface
     {
@@ -85,7 +103,7 @@ class HttpClient implements PsrClientInterface
 
     /**
      * @throws ClientExceptionInterface
-     * @throws InvalidParamException
+     * @throws InvalidParamException|Exception\InvalidConfigException
      */
     protected function request(string $apiName, string $method, array $data = [], array $headers = []): ResponseInterface
     {
@@ -102,6 +120,9 @@ class HttpClient implements PsrClientInterface
         return $this->client->send($request);
     }
 
+    /**
+     * @throws Exception\InvalidConfigException
+     */
     protected function getUri(string $apiName, array $data) : string
     {
         $uri = '?';
@@ -115,7 +136,16 @@ class HttpClient implements PsrClientInterface
 
     protected function getRequestBody(array $data, int $encodingType = PHP_QUERY_RFC1738) : string
     {
-        return http_build_query($data, '', '&', $encodingType);
+        return http_build_query($this->checkBizContent($data), '', '&', $encodingType);
+    }
+
+    protected function checkBizContent(array $data) : array
+    {
+        if( !empty($data['biz_content']) ) {
+            $data['biz_content'] = json_encode($data['biz_content']);
+        }
+
+        return $data;
     }
 
     /**
@@ -123,12 +153,61 @@ class HttpClient implements PsrClientInterface
      * @param string $apiName 接口名称
      * @param array $data
      * @return array
+     * @throws Exception\InvalidConfigException
      */
     protected function getApiParams(string $apiName, array $data) : array
     {
-        $this->sysApiParams['method']      = $apiName;
-        $this->sysApiParams['sign']        = $this->getSign(array_merge($this->sysApiParams, $data));
+        $this->sysApiParams['app_id']    = $this->app->getAppId();
+        $this->sysApiParams['timestamp'] = date('Y-m-d H:i:s');
+
+        /**
+         * 公钥证书方式
+         */
+        if(!empty($this->app->getAppPublicCertPath()) && !empty($this->app->getAlipayRootCertPath())) {
+            $this->sysApiParams['app_cert_sn']         = Utils::getAppCertSN($this->app->getAppPublicCertPath());
+            $this->sysApiParams['alipay_root_cert_sn'] = Utils::getRootCertSN($this->app->getAlipayRootCertPath());
+        }
+
+        if(isset($data['biz_content'])) {
+            $params = $data['biz_content'];
+            $data['biz_content'] = json_encode($data['biz_content']);
+        } else {
+            $params = $data;
+        }
+
+        $this->sysApiParams['method']         = $apiName;
+        $this->sysApiParams['notify_url']     = $this->getNotifyUrl($params);
+        $this->sysApiParams['return_url']     = $this->getReturnUrl($params);
+        $this->sysApiParams['app_auth_token'] = $this->getAppAuthToken($params);
+        $this->sysApiParams['sign']           = $this->getSign(array_merge($this->sysApiParams, $data));
         return $this->sysApiParams;
+    }
+
+    protected function getNotifyUrl(array $params)
+    {
+        if (!empty($params['_notify_url'])) {
+            return $params['_notify_url'];
+        }
+
+        return $this->app->config->get('notify_url', '');
+    }
+
+    protected function getReturnUrl(array $params)
+    {
+        if (!empty($params['return_url'])) {
+            return $params['return_url'];
+        }
+
+        return $this->app->config->get('return_url', '');
+    }
+
+    protected function getAppAuthToken(array $params)
+    {
+        if (!empty($params['app_auth_token'])) {
+            return $params['app_auth_token'];
+        }
+
+        return $this->app->config->get('app_auth_token', '');
     }
 
     /**
@@ -142,7 +221,7 @@ class HttpClient implements PsrClientInterface
         $stringToBeSigned = "";
         $i = 0;
         foreach ($params as $k => $v) {
-            if (!empty($v) && !str_starts_with($v, "@")) {
+            if (!empty($v) && !str_starts_with((string)$v, "@")) {
 
                 if ($i == 0) {
                     $stringToBeSigned .= "$k" . "=" . "$v";

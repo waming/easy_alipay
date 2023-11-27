@@ -16,7 +16,7 @@ class TestCase extends BaseTestCase
         'appPublicCertPath' => BAST_PATH . '/cert/appPublicCert.crt',
         'alipayPublicCertPath' =>  BAST_PATH . '/cert/alipayPublicCert.crt',
         'alipayRootCertPath' => BAST_PATH . '/cert/alipayRootCert.crt',
-        'notify_url' => 'https://www.baidu.com/',
+        'notify_url' => '',
         'http' => [
             'base_uri' => 'https://openapi-sandbox.dl.alipaydev.com/gateway.do',
             'timeout' => 5.0,
