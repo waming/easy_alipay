@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common\Support;
+namespace Honghm\EasyAlipay\Kernel\Support;
 
 use ArrayAccess;
 use InvalidArgumentException;

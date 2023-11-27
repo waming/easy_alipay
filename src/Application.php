@@ -3,24 +3,24 @@ declare(strict_types=1);
 
 namespace Honghm\EasyAlipay;
 
-use Honghm\EasyAlipay\Common\App;
-use Honghm\EasyAlipay\Common\Config;
-use Honghm\EasyAlipay\Common\Contract\AppInterface;
-use Honghm\EasyAlipay\Common\Contract\ApplicationInterface;
-use Honghm\EasyAlipay\Common\Contract\ConfigInterface;
-use Honghm\EasyAlipay\Common\HttpClient;
+use Honghm\EasyAlipay\Kernel\App;
+use Honghm\EasyAlipay\Kernel\Config;
+use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
+use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
+use Honghm\EasyAlipay\Kernel\Contract\ConfigInterface;
+use Honghm\EasyAlipay\Kernel\HttpClient;
 use JetBrains\PhpStorm\Pure;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Psr\Http\Client\ClientInterface;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Application implements ApplicationInterface
 {
     protected ?AppInterface $app = null;
 
-    protected ?RequestInterface $request = null;
+    protected ?ServerRequestInterface $request = null;
 
     protected ?ClientInterface $client = null;
 
@@ -44,7 +44,7 @@ class Application implements ApplicationInterface
         return new Config($this->config);
     }
 
-    public function getRequest(): RequestInterface
+    public function getRequest(): ServerRequestInterface
     {
         if( empty($this->request) ) {
             return $this->createDefaultRequest();
@@ -53,7 +53,7 @@ class Application implements ApplicationInterface
         return $this->request;
     }
 
-    public function setRequest(RequestInterface $request): static
+    public function setRequest(ServerRequestInterface $request): static
     {
         $this->request = $request;
         return $this;
@@ -61,18 +61,15 @@ class Application implements ApplicationInterface
 
     /**
      * 创建默认request
-     * @return RequestInterface
+     * @return ServerRequestInterface
      */
-    protected function createDefaultRequest() : RequestInterface
+    protected function createDefaultRequest() : ServerRequestInterface
     {
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
         return $creator->fromGlobals();
     }
 
-    /**
-     * @throws Common\Exception\InvalidConfigException
-     */
     public function getHttpClient(): ClientInterface
     {
         if (empty($this->client)) {
@@ -84,7 +81,6 @@ class Application implements ApplicationInterface
     /**
      * 使用guzzlehttp客户端
      * @return ClientInterface
-     * @throws Common\Exception\InvalidConfigException
      */
     protected function createDefaultHttpClient() : ClientInterface
     {

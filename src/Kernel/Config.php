@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common;
+namespace Honghm\EasyAlipay\Kernel;
 use ArrayAccess;
-use Honghm\EasyAlipay\Common\Contract\ConfigInterface;
-use Honghm\EasyAlipay\Common\Support\Arr;
+use Honghm\EasyAlipay\Kernel\Contract\ConfigInterface;
+use Honghm\EasyAlipay\Kernel\Support\Arr;
 
 class Config implements ArrayAccess, ConfigInterface
 {

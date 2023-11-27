@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common;
+namespace Honghm\EasyAlipay\Kernel;
 
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Psr7\Response as BaseResponse;

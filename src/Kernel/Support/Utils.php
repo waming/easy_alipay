@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common\Support;
+namespace Honghm\EasyAlipay\Kernel\Support;
 
-use Honghm\EasyAlipay\Common\Exception\InvalidConfigException;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 
 /**
  * 工具类

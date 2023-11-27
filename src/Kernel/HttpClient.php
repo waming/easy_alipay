@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common;
+namespace Honghm\EasyAlipay\Kernel;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Request;
-use Honghm\EasyAlipay\Common\Contract\AppInterface;
-use Honghm\EasyAlipay\Common\Contract\ApplicationInterface;
-use Honghm\EasyAlipay\Common\Exception\InvalidParamException;
-use Honghm\EasyAlipay\Common\Support\Utils;
+use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
+use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidParamException;
+use Honghm\EasyAlipay\Kernel\Support\Utils;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface as PsrClientInterface;
 use Psr\Http\Message\RequestInterface;
@@ -194,8 +194,8 @@ class HttpClient implements PsrClientInterface
 
     protected function getReturnUrl(array $params)
     {
-        if (!empty($params['return_url'])) {
-            return $params['return_url'];
+        if (!empty($params['_return_url'])) {
+            return $params['_return_url'];
         }
 
         return $this->app->config->get('return_url', '');
@@ -203,8 +203,8 @@ class HttpClient implements PsrClientInterface
 
     protected function getAppAuthToken(array $params)
     {
-        if (!empty($params['app_auth_token'])) {
-            return $params['app_auth_token'];
+        if (!empty($params['_app_auth_token'])) {
+            return $params['_app_auth_token'];
         }
 
         return $this->app->config->get('app_auth_token', '');

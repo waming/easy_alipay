@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common;
+namespace Honghm\EasyAlipay\Kernel;
 
-use Honghm\EasyAlipay\Common\Contract\ConfigInterface;
-use Honghm\EasyAlipay\Common\Contract\AppInterface;
-use Honghm\EasyAlipay\Common\Exception\InvalidConfigException;
+use Honghm\EasyAlipay\Kernel\Contract\ConfigInterface;
+use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 
 class App implements AppInterface
 {

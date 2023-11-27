@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common\Support;
+namespace Honghm\EasyAlipay\Kernel\Support;
+
+use JetBrains\PhpStorm\Pure;
 
 function array2string(array $array) : string
 {
@@ -32,4 +34,10 @@ function hex2dec($hex): int|string
     }
 
     return $dec;
+}
+
+#[Pure(true)]
+function getPublicCert(string $key): string
+{
+    return Str::endsWith($key, ['.cer', '.crt', '.pem']) ? file_get_contents($key) : $key;
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace Honghm\EasyAlipay\Tests;
 
 use Honghm\EasyAlipay\Application;
-use Honghm\EasyAlipay\Common\App;
-use Honghm\EasyAlipay\Common\Exception\InvalidConfigException;
+use Honghm\EasyAlipay\Kernel\App;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use JetBrains\PhpStorm\Pure;
 
 class ApplicationTest extends TestCase

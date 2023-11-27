@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Honghm\EasyAlipay\Common\Contract;
+namespace Honghm\EasyAlipay\Kernel\Contract;
 
 /**
  * 支付宝应用接口

@@ -33,7 +33,7 @@
             "Honghm\\EasyAlipay\\": "src/"
         },
         "files": [
-            "src/Common/Support/Functions.php"
+          "src/Kernel/Support/Functions.php"
         ]
     },
     "autoload-dev": {
