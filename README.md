@@ -39,13 +39,13 @@ $config = [
     $data['grant_type'] = 'authorization_code';
     $data['code']       = '4b203fe6c11548bcabd8da5bb087a83b';
     $response = $client->post('alipay.system.oauth.token', $data);
-
-    $body     = $response->getBody()->getContents();
-    $data     = json_decode($body, true);
-
-    $this->assertEquals(200, $response->getStatusCode());
-    $this->assertNotNull($data['error_response'], 'ok');
-    $this->assertEquals(40002, $data['error_response']['code']);
+    
+    $responseInterface = $response->getResponse(); //获取原始响应    
+    $rawData = $response->getRawData(); //json_decode 后的数据
+    $result  = $response->getData(); //json_decode后去除验签的数据
+    
+    $this->assertSame('40002', $rawData['error_response']['code'], 'ok');
+    $this->assertSame('40002', $result['code'], 'ok');
 
 ```
 

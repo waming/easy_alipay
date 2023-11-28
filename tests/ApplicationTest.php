@@ -8,6 +8,7 @@ use Honghm\EasyAlipay\Kernel\App;
 use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use JetBrains\PhpStorm\Pure;
+use Psr\Http\Message\ResponseInterface;
 
 class ApplicationTest extends TestCase
 {
@@ -35,8 +36,18 @@ class ApplicationTest extends TestCase
         $client = $application->getHttpClient();
         $data['grant_type'] = 'authorization_code';
         $data['code']       = '4b203fe6c11548bcabd8da5bb087a83b';
+
+        /** @var AlipayResponseInterface $response*/
         $response = $client->post('alipay.system.oauth.token', $data);
-        $data = $response->getData();
-        $this->assertSame('40002', $data['error_response']['code'], 'ok');
+
+        /** @var ResponseInterface $responseInterface*/
+        $responseInterface = $response->getResponse(); //获取原始响应
+        $this->assertNotNull($responseInterface->getBody()->getContents());
+
+        $rawData = $response->getRawData(); //json_decode 后的数据
+        $this->assertSame('40002', $rawData['error_response']['code'], 'ok');
+
+        $result  = $response->getData();    //json_decode后去除验签的数据
+        $this->assertSame('40002', $result['code'], 'ok');
     }
 }

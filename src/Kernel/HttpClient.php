@@ -85,34 +85,33 @@ class HttpClient implements PsrClientInterface
     }
 
     /**
+     * @param string $method
+     * @param array $arguments
+     * @return AlipayResponseInterface
      * @throws ClientExceptionInterface
-     * @throws InvalidResponseJsonException
+     * @throws Exception\InvalidConfigException
+     * @throws InvalidParamException
      * @throws InvalidResponseException
-     * @throws InvalidParamException|Exception\InvalidConfigException
+     * @throws InvalidResponseJsonException
      */
-    public function get(string $apiName, array $data = [], array $headers = []) : AlipayResponseInterface
+    public function __call(string $method, array $arguments) : AlipayResponseInterface
     {
-        return $this->request($apiName, 'GET', $data, $headers);
+        return $this->request($method, ...$arguments);
     }
 
     /**
+     * @param string $apiName
+     * @param string $method
+     * @param array $data
+     * @param array $headers
+     * @return AlipayResponseInterface
      * @throws ClientExceptionInterface
-     * @throws InvalidResponseJsonException
+     * @throws Exception\InvalidConfigException
+     * @throws InvalidParamException
      * @throws InvalidResponseException
-     * @throws InvalidParamException|Exception\InvalidConfigException
-     */
-    public function post(string $apiName, array $data = [], array $headers = []) : AlipayResponseInterface
-    {
-        return $this->request($apiName, 'POST', $data, $headers);
-    }
-
-    /**
-     * @throws ClientExceptionInterface
      * @throws InvalidResponseJsonException
-     * @throws InvalidResponseException
-     * @throws InvalidParamException|Exception\InvalidConfigException
      */
-    protected function request(string $apiName, string $method, array $data = [], array $headers = []): AlipayResponseInterface
+    protected function request(string $method, string $apiName, array $data = [], array $headers = []): AlipayResponseInterface
     {
         if(empty($apiName)) {
             throw new InvalidParamException('Please check method param.');
