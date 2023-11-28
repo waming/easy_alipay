@@ -52,11 +52,10 @@ class PayTest extends TestCase
 
         $requestData = ['biz_content' => $object];
         $response = $client->post('alipay.trade.create', $requestData);
-        $data     = json_decode($response->getbody()->getContents(), true);
+        $data     = $response->getData();
 
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertNotNull($data['alipay_trade_create_response'], 'ok');
-        $this->assertEquals(40004, $data['alipay_trade_create_response']['code']);
+        $this->assertSame('10000', $data['code'], 'ok');
+        $this->assertSame($object['out_trade_no'], $data['out_trade_no'], 'ok');
     }
 
     /**
@@ -73,7 +72,6 @@ class PayTest extends TestCase
 
         $response = $client->getPageResponse('alipay.trade.wap.pay', $object, 'POST');
         $body     = $response->getBody()->getContents();
-        file_put_contents( BAST_PATH .'/test.html', $body);
         $this->assertEquals(200, $response->getStatusCode());
     }
 

@@ -5,6 +5,7 @@ namespace Honghm\EasyAlipay\Tests;
 
 use Honghm\EasyAlipay\Application;
 use Honghm\EasyAlipay\Kernel\App;
+use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use JetBrains\PhpStorm\Pure;
 
@@ -32,16 +33,10 @@ class ApplicationTest extends TestCase
         $this->assertEquals('GET', $request->getMethod());
 
         $client = $application->getHttpClient();
-
         $data['grant_type'] = 'authorization_code';
         $data['code']       = '4b203fe6c11548bcabd8da5bb087a83b';
         $response = $client->post('alipay.system.oauth.token', $data);
-
-        $body     = $response->getBody()->getContents();
-        $data     = json_decode($body, true);
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertNotNull($data['error_response'], 'ok');
-        $this->assertEquals(40002, $data['error_response']['code']);
+        $data = $response->getData();
+        $this->assertSame('40002', $data['error_response']['code'], 'ok');
     }
 }

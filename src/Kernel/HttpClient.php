@@ -6,9 +6,12 @@ namespace Honghm\EasyAlipay\Kernel;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Request;
+use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
 use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidParamException;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseException;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseJsonException;
 use Honghm\EasyAlipay\Kernel\Support\Utils;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface as PsrClientInterface;
@@ -83,36 +86,41 @@ class HttpClient implements PsrClientInterface
 
     /**
      * @throws ClientExceptionInterface
-     * @throws InvalidParamException
-     * @throws Exception\InvalidConfigException
+     * @throws InvalidResponseJsonException
+     * @throws InvalidResponseException
+     * @throws InvalidParamException|Exception\InvalidConfigException
      */
-    public function get(string $apiName, array $data = [], array $headers = []) : ResponseInterface
+    public function get(string $apiName, array $data = [], array $headers = []) : AlipayResponseInterface
     {
         return $this->request($apiName, 'GET', $data, $headers);
     }
 
     /**
      * @throws ClientExceptionInterface
-     * @throws InvalidParamException
-     * @throws Exception\InvalidConfigException
+     * @throws InvalidResponseJsonException
+     * @throws InvalidResponseException
+     * @throws InvalidParamException|Exception\InvalidConfigException
      */
-    public function post(string $apiName, array $data = [], array $headers = []) : ResponseInterface
+    public function post(string $apiName, array $data = [], array $headers = []) : AlipayResponseInterface
     {
         return $this->request($apiName, 'POST', $data, $headers);
     }
 
     /**
      * @throws ClientExceptionInterface
+     * @throws InvalidResponseJsonException
+     * @throws InvalidResponseException
      * @throws InvalidParamException|Exception\InvalidConfigException
      */
-    protected function request(string $apiName, string $method, array $data = [], array $headers = []): ResponseInterface
+    protected function request(string $apiName, string $method, array $data = [], array $headers = []): AlipayResponseInterface
     {
         if(empty($apiName)) {
             throw new InvalidParamException('Please check method param.');
         }
 
-        $request = new Request($method, $this->getUri($apiName, $data), $headers, $this->getRequestBody($data));
-        return $this->sendRequest($request);
+        $request  = new Request($method, $this->getUri($apiName, $data), $headers, $this->getRequestBody($data));
+        $response = $this->sendRequest($request);
+        return new AlipayResponse($this->application, $apiName, $response);
     }
 
     public function sendRequest(RequestInterface $request): ResponseInterface

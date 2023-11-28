@@ -6,6 +6,9 @@ namespace Honghm\EasyAlipay\Kernel;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Psr7\Response as BaseResponse;
 
+/**
+ * 定义响应体，针对异步通知
+ */
 class Response
 {
     public static function create(int $status = 200,
