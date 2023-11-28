@@ -20,9 +20,7 @@
         "nyholm/psr7": "1.8.x-dev",
         "nyholm/psr7-server": "^1.1",
         "symfony/http-client": "^6.0",
-        "symfony/var-dumper": "^5.1",
-        "symfony/http-foundation": "^5.2.0",
-        "symfony/event-dispatcher": "^5.2.0",
+        "symfony/http-foundation": "^6.0",
         "symfony/psr-http-message-bridge": "^2.1",
         "guzzlehttp/guzzle": "^7.0"
     },
@@ -31,7 +29,9 @@
         "jetbrains/phpstorm-attributes": "^1.0",
         "mockery/mockery": "^1.4",
         "friendsofphp/php-cs-fixer": "^3.0",
-        "phpstan/phpstan": "^1.0.0"
+        "phpstan/phpstan": "^1.0.0",
+        "symfony/var-dumper": "^5.1",
+        "symfony/event-dispatcher": "^5.2.0"
     },
     "license": "MIT",
     "autoload": {

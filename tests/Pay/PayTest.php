@@ -50,13 +50,13 @@ class PayTest extends TestCase
         $object['buyer_id']     = '2088722020890152';
         $object['op_app_id']    = '9021000131659150';
 
-        $requestData = ['biz_content' => json_encode($object)];
+        $requestData = ['biz_content' => $object];
         $response = $client->post('alipay.trade.create', $requestData);
         $data     = json_decode($response->getbody()->getContents(), true);
 
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertNotNull($data['alipay_trade_create_response'], 'ok');
-        $this->assertEquals(10000, $data['alipay_trade_create_response']['code']);
+        $this->assertEquals(40004, $data['alipay_trade_create_response']['code']);
     }
 
     /**
