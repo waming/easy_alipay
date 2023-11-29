@@ -44,4 +44,22 @@ class ApplicationTest extends TestCase
         $result  = $response->getData();    //json_decode后去除验签的数据
         $this->assertSame('40002', $result['code'], 'ok');
     }
+
+    public function testApi()
+    {
+        $application = new Application($this->config);
+        $client = $application->getHttpClient();
+
+        $data = [
+            'user_id' => '123123',
+            'budget_code' => "1111",
+            'partner_biz_no' => date('YmdHis').random_int(1000, 9999),
+            'point_amount' => 1,
+        ];
+
+        $response = $client->post('alipay.user.alipaypoint.send', ['biz_content' => $data]);
+        $data = $response->getData();
+        $this->assertNotNull($data, 'not empty');
+        $this->assertSame($data['code'], '40006', 'ok');
+    }
 }

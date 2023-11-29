@@ -17,6 +17,8 @@ class AlipayResponse implements AlipayResponseInterface
 {
     protected array $resposeData;
 
+    protected string $rawContent;
+
     /**
      * @throws InvalidResponseJsonException
      * @throws InvalidResponseException
@@ -34,11 +36,10 @@ class AlipayResponse implements AlipayResponseInterface
      */
     protected function setResponseData() : void
     {
-        $content = $this->response->getBody()->getContents();
-        $data = json_decode($content, true);
+        $this->rawContent = $this->response->getBody()->getContents();
+        $data = json_decode($this->rawContent, true);
         if (!is_array($data)) {
-            $error = function_exists('json_last_error_msg') ? json_last_error_msg() : json_last_error();
-            throw new InvalidResponseJsonException($content, $error);
+            throw new InvalidResponseJsonException($this->rawContent, json_last_error());
         }
         $this->resposeData = $data;
     }
@@ -53,18 +54,27 @@ class AlipayResponse implements AlipayResponseInterface
     {
         $response_key = $this->getResultKey();
         $content      = $this->resposeData[$response_key] ?? $this->resposeData['error_response'];
-
-        if(empty($this->resposeData['sign']) || empty($content)) {
-            throw new InvalidResponseJsonException($this->response->getBody()->getContents(), 500);
+        if (empty($this->resposeData['sign']) || empty($content)) {
+            throw new InvalidResponseJsonException($this->rawContent, 500);
         }
 
-        $public = $this->application->getConfig()->get('alipayPublicCertPath');
+        $public      = $this->application->getConfig()->get('alipayPublicCertPath');
         $signContent = json_encode($content, JSON_UNESCAPED_UNICODE);
 
-        $result = (openssl_verify($signContent, base64_decode($this->resposeData['sign']), getPublicCert($public),OPENSSL_ALGO_SHA256) === 1);
+        $sign = base64_decode($this->resposeData['sign'], true);
+        $result = (openssl_verify($signContent, $sign, getPublicCert($public), OPENSSL_ALGO_SHA256) === 1);
 
         if (!$result) {
-            throw new InvalidResponseException('Fail sign', 501);
+
+            //特殊字符串
+            if (strpos($signContent, "\\/") > 0) {
+                $signContent = str_replace("\\/", "/", $signContent);
+                $result = (openssl_verify($signContent, $sign, getPublicCert($public), OPENSSL_ALGO_SHA256) === 1);
+            }
+        }
+
+        if (!$result) {
+            throw new InvalidResponseException('Fail sign' . $this->rawContent, 501);
         }
     }
 
