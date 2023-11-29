@@ -8,6 +8,7 @@ use Honghm\EasyAlipay\Kernel\App;
 use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use JetBrains\PhpStorm\Pure;
+use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ApplicationTest extends TestCase
