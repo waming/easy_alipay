@@ -8,7 +8,6 @@ use Honghm\EasyAlipay\Kernel\App;
 use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use JetBrains\PhpStorm\Pure;
-use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ApplicationTest extends TestCase
@@ -22,10 +21,6 @@ class ApplicationTest extends TestCase
         $this->assertEquals('9021000131661052', $app->getAppId());
     }
 
-    /**
-     * @throws InvalidConfigException
-     */
-    #[Pure]
     public function testApplication()
     {
         $application = new Application($this->config);
@@ -38,10 +33,8 @@ class ApplicationTest extends TestCase
         $data['grant_type'] = 'authorization_code';
         $data['code']       = '4b203fe6c11548bcabd8da5bb087a83b';
 
-        /** @var AlipayResponseInterface $response*/
         $response = $client->post('alipay.system.oauth.token', $data);
 
-        /** @var ResponseInterface $responseInterface*/
         $responseInterface = $response->getResponse(); //获取原始响应
         $this->assertNotNull($responseInterface->getBody()->getContents());
 

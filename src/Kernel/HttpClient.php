@@ -4,11 +4,11 @@ declare(strict_types=1);
 namespace Honghm\EasyAlipay\Kernel;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Request;
 use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
 use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
+use Honghm\EasyAlipay\Kernel\Contract\HttpClientInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidParamException;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseException;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseJsonException;
@@ -18,9 +18,13 @@ use Psr\Http\Client\ClientInterface as PsrClientInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-class HttpClient implements PsrClientInterface
+/**
+ * @method AlipayResponseInterface get(string $apiName, array $data = [])
+ * @method AlipayResponseInterface post(string $apiName, array $options = [])
+ */
+class HttpClient implements HttpClientInterface
 {
-    protected ClientInterface $client;
+    protected PsrClientInterface $client;
 
     protected AppInterface $app;
 
@@ -116,7 +120,6 @@ class HttpClient implements PsrClientInterface
         if(empty($apiName)) {
             throw new InvalidParamException('Please check method param.');
         }
-
         $request  = new Request($method, $this->getUri($apiName, $data), $headers, $this->getRequestBody($data));
         $response = $this->sendRequest($request);
         return new AlipayResponse($this->application, $apiName, $response);
@@ -124,7 +127,7 @@ class HttpClient implements PsrClientInterface
 
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        return $this->client->send($request);
+        return $this->client->sendRequest($request);
     }
 
     /**

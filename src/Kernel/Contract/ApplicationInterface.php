@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace Honghm\EasyAlipay\Kernel\Contract;
 
-use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 interface ApplicationInterface
 {
@@ -29,7 +27,7 @@ interface ApplicationInterface
 
     /**
      * 获取http client
-     * @return ClientInterface
+     * @return HttpClientInterface
      */
-    public function getHttpClient(): ClientInterface;
+    public function getHttpClient(): HttpClientInterface;
 }

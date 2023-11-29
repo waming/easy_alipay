@@ -35,9 +35,6 @@ class PayTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
-    /**
-     * @throws InvalidConfigException
-     */
     public function testAlipayTradeCreateApi()
     {
         $application = new Application($this->miniConfig);

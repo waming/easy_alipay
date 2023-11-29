@@ -8,11 +8,11 @@ use Honghm\EasyAlipay\Kernel\Config;
 use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
 use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
 use Honghm\EasyAlipay\Kernel\Contract\ConfigInterface;
+use Honghm\EasyAlipay\Kernel\Contract\HttpClientInterface;
 use Honghm\EasyAlipay\Kernel\HttpClient;
 use JetBrains\PhpStorm\Pure;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
-use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -22,7 +22,7 @@ class Application implements ApplicationInterface
 
     protected ?ServerRequestInterface $request = null;
 
-    protected ?ClientInterface $client = null;
+    protected ?HttpClientInterface $client = null;
 
     protected ?ResponseInterface $response = null;
 
@@ -70,7 +70,7 @@ class Application implements ApplicationInterface
         return $creator->fromGlobals();
     }
 
-    public function getHttpClient(): ClientInterface
+    public function getHttpClient() : HttpClientInterface
     {
         if (empty($this->client)) {
             return $this->createDefaultHttpClient();
@@ -80,9 +80,9 @@ class Application implements ApplicationInterface
 
     /**
      * 使用guzzlehttp客户端
-     * @return ClientInterface
+     * @return HttpClientInterface
      */
-    protected function createDefaultHttpClient() : ClientInterface
+    protected function createDefaultHttpClient(): HttpClientInterface
     {
         return new HttpClient($this);
     }
