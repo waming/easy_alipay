@@ -5,6 +5,9 @@
 # 环境要求
 - PHP >= 8.0.2
 - [Composer](https://getcomposer.org/) >= 2.0
+- [ext-curl](https://www.php.net/manual/en/book.curl.php)
+- [ext-mbstring](https://www.php.net/manual/en/book.mbstring.php)
+- [ext-ctype](https://www.php.net/manual/en/book.ctype.php)
 
 ## 安装
 
@@ -36,11 +39,16 @@ $config = [
     
     $client = $application->getHttpClient();
 
+    //无需biz_content
     $data['grant_type'] = 'authorization_code';
     $data['code']       = '4b203fe6c11548bcabd8da5bb087a83b';
     $response = $client->post('alipay.system.oauth.token', $data);
     
-    $responseInterface = $response->getResponse(); //获取原始响应    
+    $responseInterface = $response->getResponse(); //获取原始响应
+    
+    //必须biz_content
+    $response = $client->post('alipay.trade.create', ['biz_content' => $data]);
+    
     $rawData = $response->getRawData(); //json_decode 后的数据
     $result  = $response->getData(); //json_decode后去除验签的数据
     
@@ -48,6 +56,21 @@ $config = [
     $this->assertSame('40002', $result['code'], 'ok');
 
 ```
+
+## 更多使用
+
+```php
+    
+    //使用自定义request, request需实现Psr\Http\Message\ServerRequestInterface接口
+    $appticaion->setRequest($request);
+    
+    //使用自定义httpClient，自己需要实现签名、验签
+    class client implements Honghm\EasyAlipay\Kernel\Contract\HttpClientInterface
+    {}
+    $httpClient = new Client();
+    $appticaion->setClient($httpClient);
+```
+
 
 ## 更多使用可查看测试用例
 
