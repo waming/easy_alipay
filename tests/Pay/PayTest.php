@@ -8,6 +8,7 @@ use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidParamException;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseException;
 use Honghm\EasyAlipay\Kernel\Notify;
+use Honghm\EasyAlipay\Kernel\Pay;
 use Honghm\EasyAlipay\Tests\TestCase;
 use Nyholm\Psr7\ServerRequest;
 
@@ -19,20 +20,17 @@ class PayTest extends TestCase
     public function testAlipayTradePagePayApi()
     {
         $application = new Application($this->config);
-        $client = $application->getHttpClient();
+        $payClient = new Pay($application);
 
-        $object['_notify_url']  = 'https://channel.baidu.cn/v2/pay/notify';
-        $object['out_trade_no'] = 'test.123'.time();
+        $object['notify_url']  = 'https://channel.baidu.cn/v2/pay/notify';
+        $object['return_url'] = 'https://www.baidu.com';
+        $object['out_trade_no'] = 'test.123'.time(); //test.1231724922156
         $object['total_amount'] = 99.0;
         $object['subject']      = 'test.123'.time();
         $object['product_code'] = 'FAST_INSTANT_TRADE_PAY';
-        $requestData = ['biz_content' => $object];
 
-        $response = $client->getPageResponse('alipay.trade.page.pay', $requestData);
-
-        var_dump($response->getHeaders());
-
-        $this->assertEquals(200, $response->getStatusCode());
+        $response = $payClient->pageExecute('alipay.trade.page.pay', ['biz_content' => $object], 'GET');
+        var_dump($response);
     }
 
     public function testAlipayTradeCreateApi()

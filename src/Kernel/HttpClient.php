@@ -49,40 +49,6 @@ class HttpClient implements HttpClientInterface
     }
 
     /**
-     * 适用于生成页面的接口。比如支付宝的手机网站支付
-     * @throws Exception
-     */
-    public function getPageResponse(string $apiName, array $data, string $method = 'GET') : ResponseInterface
-    {
-        if('GET' === strtoupper($method)) {
-            $query = $this->getRequestBody(array_merge($data, $this->getApiParams($apiName, $data)));
-            $uri = $this->app->config->get('http')['base_uri'].'?'.$query;
-            return Response::create(302, ['Location' => $uri]);
-        } else {
-            return $this->buildHtml($apiName, $data);
-        }
-    }
-
-    /**
-     * @throws Exception
-     */
-    protected function buildHtml(string $apiName, array $data): ResponseInterface
-    {
-        $gateWay = $this->application->getConfig()->get('http')['base_uri'].'?charset=';
-        $params  = array_merge($this->getApiParams($apiName, $data), $data);
-
-        $sHtml = "<form id='alipay_submit' name='alipay_submit' action='".$gateWay."' method='POST'>";
-        foreach ($params as $key => $val) {
-            $val = str_replace("'", '&apos;', (string)$val);
-            $sHtml .= "<input type='hidden' name='".$key."' value='".$val."'/>";
-        }
-        $sHtml .= "<input type='submit' value='ok' style='display:none;'></form>";
-        $sHtml .= "<script>document.forms['alipay_submit'].submit();</script>";
-
-        return Response::create(200, [], $sHtml);
-    }
-
-    /**
      * @param string $method
      * @param array $arguments
      * @return AlipayResponseInterface

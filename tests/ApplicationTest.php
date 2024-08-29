@@ -47,15 +47,14 @@ class ApplicationTest extends TestCase
         $client = $application->getHttpClient();
 
         $data = [
-            'user_id' => '123123',
-            'budget_code' => "1111",
-            'partner_biz_no' => date('YmdHis').random_int(1000, 9999),
-            'point_amount' => 1,
+            'out_trade_no' => 'test.1231724922156',
         ];
 
-        $response = $client->post('alipay.user.alipaypoint.send', ['biz_content' => $data]);
-        $data = $response->getData();
-        $this->assertNotNull($data, 'not empty');
-        $this->assertSame($data['code'], '40006', 'ok');
+        $response = $client->post('/v3/alipay/trade/query', $data);
+        $result  = $response->getData();    //json_decode后去除验签的数据
+        var_dump($result);
+        $this->assertNotNull($result, 'not empty');
+        $this->assertSame(true, $response->isSuccess(), 'ok1');
+        $this->assertSame(200, $response->getStatusCode(), 'ok2');
     }
 }

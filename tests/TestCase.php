@@ -19,7 +19,7 @@ class TestCase extends BaseTestCase
         'appSecret'  => 'f7naAgykq70ng3Lzv5oF1A==',
         'notify_url' => '',
         'http' => [
-            'base_uri' => 'https://openapi-sandbox.dl.alipaydev.com',
+            'base_uri' => 'https://openapi-sandbox.dl.alipaydev.com', //https://openapi.alipay.com
             'timeout' => 5.0,
             'headers' => [],
         ],
