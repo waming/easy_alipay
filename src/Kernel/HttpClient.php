@@ -3,15 +3,16 @@ declare(strict_types=1);
 
 namespace Honghm\EasyAlipay\Kernel;
 
+use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use Honghm\EasyAlipay\Kernel\Contract\AlipayResponseInterface;
 use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
 use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
 use Honghm\EasyAlipay\Kernel\Contract\HttpClientInterface;
+use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidParamException;
-use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseException;
-use Honghm\EasyAlipay\Kernel\Exception\InvalidResponseJsonException;
 use Honghm\EasyAlipay\Kernel\Support\Utils;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface as PsrClientInterface;
@@ -29,34 +30,27 @@ class HttpClient implements HttpClientInterface
     protected AppInterface $app;
 
     /*
-     * 系统请求参数，生成的链接中会自动添加这些参数
+     * 系统参数，传参
      */
-    protected array $sysApiParams = [
-        'app_id'    => '',
-        'method'    => '',
-        'format'    => 'JSON',
-        'charset'   => 'utf-8',
-        'sign_type' => 'RSA2',
-        'timestamp' => '',
-        'version'   => '1.0',
-    ];
-
-    protected array $defaultHeaders = [
-        'Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8',
-        'Accept'       => 'application/json'
+    protected array $sysHeaders = [
+        'authorization'          => '',
+        'content-type'           => 'application/json;charset=utf-8',
+        'alipay-request-id'      => '',
+        'alipay-encrypt-type'    => 'AES',
+        'alipay-root-cert-sn'    => '',
+        'alipay-app-auth-token'  => '',
     ];
 
     public function __construct(protected ApplicationInterface $application)
     {
         $config = $application->getConfig()->get('http');
-        $config['headers'] = array_merge($this->defaultHeaders, $config['headers'] ?? []);
         $this->app = $this->application->getApp();
         $this->client = new Client($config);
     }
 
     /**
      * 适用于生成页面的接口。比如支付宝的手机网站支付
-     * @throws Exception\InvalidConfigException
+     * @throws Exception
      */
     public function getPageResponse(string $apiName, array $data, string $method = 'GET') : ResponseInterface
     {
@@ -70,11 +64,11 @@ class HttpClient implements HttpClientInterface
     }
 
     /**
-     * @throws Exception\InvalidConfigException
+     * @throws Exception
      */
     protected function buildHtml(string $apiName, array $data): ResponseInterface
     {
-        $gateWay = $this->application->getConfig()->get('http')['base_uri'].'?charset='.$this->sysApiParams['charset'];
+        $gateWay = $this->application->getConfig()->get('http')['base_uri'].'?charset=';
         $params  = array_merge($this->getApiParams($apiName, $data), $data);
 
         $sHtml = "<form id='alipay_submit' name='alipay_submit' action='".$gateWay."' method='POST'>";
@@ -93,14 +87,12 @@ class HttpClient implements HttpClientInterface
      * @param array $arguments
      * @return AlipayResponseInterface
      * @throws ClientExceptionInterface
-     * @throws Exception\InvalidConfigException
      * @throws InvalidParamException
-     * @throws InvalidResponseException
-     * @throws InvalidResponseJsonException
+     * @throws Exception
      */
     public function __call(string $method, array $arguments) : AlipayResponseInterface
     {
-        return $this->request($method, ...$arguments);
+        return $this->request(strtoupper($method), ...$arguments);
     }
 
     /**
@@ -110,19 +102,92 @@ class HttpClient implements HttpClientInterface
      * @param array $headers
      * @return AlipayResponseInterface
      * @throws ClientExceptionInterface
-     * @throws Exception\InvalidConfigException
+     * @throws Exception
      * @throws InvalidParamException
-     * @throws InvalidResponseException
-     * @throws InvalidResponseJsonException
+     * @throws InvalidConfigException
      */
     protected function request(string $method, string $apiName, array $data = [], array $headers = []): AlipayResponseInterface
     {
         if(empty($apiName)) {
             throw new InvalidParamException('Please check method param.');
         }
-        $request  = new Request($method, $this->getUri($apiName, $data), $headers, $this->getRequestBody($data));
+        $headers = $this->setHeaders($method, $apiName, $data, $headers);
+        $request = new Request($method, $this->getUri($apiName), $headers, $this->getRequestBody($data));
         $response = $this->sendRequest($request);
-        return new AlipayResponse($this->application, $apiName, $response);
+        return new AlipayResponse($this->application, $response);
+    }
+
+    /**
+     * @throws InvalidConfigException
+     */
+    protected function setHeaders(string $method, string $apiName, array $data, array $headers): array
+    {
+        $this->getSysHeaders($method, $apiName, $data);
+
+        if(empty($this->sysHeaders['alipay-app-auth-token'])) {
+            unset($this->sysHeaders['alipay-app-auth-token']);
+        }
+        return array_merge($this->sysHeaders, $headers);
+    }
+
+    /**
+     * 获取系统header参数
+     * @param string $method
+     * @param string $apiName
+     * @param array $data
+     * @return void
+     * @throws InvalidConfigException
+     */
+    protected function getSysHeaders(string $method, string $apiName, array $data) : void
+    {
+        $this->sysHeaders['alipay-request-id'] = $this->getSysAlipayRequestId();
+
+        //是否对请求参数加密
+        if($this->isEncrypt() && !empty($data)) {
+            $this->sysHeaders['content-type'] = 'text/plain;charset=utf-8';
+        } else {
+            $this->sysHeaders['content-type'] = 'application/json;charset=utf-8';
+            unset($this->sysHeaders['alipay-encrypt-type']);
+        }
+
+        /**
+         * 公钥证书方式
+         */
+        if(!empty($this->app->getAppPublicCertPath()) && !empty($this->app->getAlipayRootCertPath())) {
+            $this->sysHeaders['alipay-root-cert-sn'] = Utils::getRootCertSN($this->app->getAlipayRootCertPath());
+        }
+
+        $authToken = $this->getAppAuthToken($data);
+        if(!empty($authToken)) {
+            $this->sysHeaders['alipay-app-auth-token'] = $authToken;
+        }
+
+        $this->sysHeaders['authorization'] = $this->sign($method, $apiName, $data);
+    }
+
+    /**
+     * @throws InvalidConfigException
+     */
+    protected function sign(string $method, string $apiName, array $data) : string
+    {
+        $app_cert_no = Utils::getAppCertSN($this->app->getAppPublicCertPath());
+        $nonce     = $this->createUuid();
+        $timestamp = $this->getCurrentMilis();
+        $httpRequestBody = $this->getRequestBody($data);
+        $authString = 'app_id=' . $this->app->getAppId()
+            . ($this->checkEmpty($app_cert_no) ? '' : ',app_cert_sn=' . $app_cert_no)
+            . ',nonce=' . $nonce
+            . ',timestamp=' . $timestamp;
+        $content = $authString . "\n"
+            . $method . "\n"
+            . $apiName . "\n"
+            . ($httpRequestBody) . "\n"
+            . ($this->checkEmpty($this->sysHeaders['alipay-app-auth-token']) ? '' : $this->sysHeaders['alipay-app-auth-token'] . "\n");
+        $res = "-----BEGIN RSA PRIVATE KEY-----\n" .
+        wordwrap($this->app->getAppPrivateKey(), 64, "\n", true) .
+        "\n-----END RSA PRIVATE KEY-----";
+        openssl_sign($content, $sign, $res, OPENSSL_ALGO_SHA256);
+        return 'ALIPAY-SHA256withRSA' . ' ' . $authString . ',sign='. base64_encode($sign);
     }
 
     public function sendRequest(RequestInterface $request): ResponseInterface
@@ -130,85 +195,51 @@ class HttpClient implements HttpClientInterface
         return $this->client->sendRequest($request);
     }
 
-    /**
-     * @throws Exception\InvalidConfigException
-     */
-    protected function getUri(string $apiName, array $data) : string
+    protected function getUri(string $apiName) : string
     {
-        $uri = '?';
-        $params = $this->getApiParams($apiName, $data);
-        foreach ($params as $sysParamKey => $sysParamValue) {
-            $tempParm = $sysParamValue ? urlencode($sysParamValue): '';
-            $uri .= "$sysParamKey=" . $tempParm . "&";
-        }
-        return substr($uri, 0, -1);
+        return $apiName;
     }
 
-    protected function getRequestBody(array $data, int $encodingType = PHP_QUERY_RFC1738) : string
+    public function checkEmpty($value) : bool
     {
-        return http_build_query($this->checkBizContent($data), '', '&', $encodingType);
-    }
-
-    protected function checkBizContent(array $data) : array
-    {
-        if( !empty($data['biz_content']) ) {
-            $data['biz_content'] = json_encode($data['biz_content']);
+        if (!isset($value)) {
+            return true;
         }
-
-        return $data;
+        if (trim($value) === "") {
+            return true;
+        }
+        if(is_array($value) && count($value) == 0) {
+            return true;
+        }
+        return false;
     }
 
     /**
-     * 获取系统请求参数
-     * @param string $apiName 接口名称
-     * @param array $data
-     * @return array
-     * @throws Exception\InvalidConfigException
+     * 是否加密
+     * @return bool
      */
-    protected function getApiParams(string $apiName, array $data) : array
+    public function isEncrypt() : bool
     {
-        $this->sysApiParams['app_id']    = $this->app->getAppId();
-        $this->sysApiParams['timestamp'] = date('Y-m-d H:i:s');
-
-        /**
-         * 公钥证书方式
-         */
-        if(!empty($this->app->getAppPublicCertPath()) && !empty($this->app->getAlipayRootCertPath())) {
-            $this->sysApiParams['app_cert_sn']         = Utils::getAppCertSN($this->app->getAppPublicCertPath());
-            $this->sysApiParams['alipay_root_cert_sn'] = Utils::getRootCertSN($this->app->getAlipayRootCertPath());
-        }
-
-        if(isset($data['biz_content'])) {
-            $params = $data['biz_content'];
-            $data['biz_content'] = json_encode($data['biz_content']);
-        } else {
-            $params = $data;
-        }
-
-        $this->sysApiParams['method']         = $apiName;
-        $this->sysApiParams['notify_url']     = $this->getNotifyUrl($params);
-        $this->sysApiParams['return_url']     = $this->getReturnUrl($params);
-        $this->sysApiParams['app_auth_token'] = $this->getAppAuthToken($params);
-        $this->sysApiParams['sign']           = $this->getSign(array_merge($this->sysApiParams, $data));
-        return $this->sysApiParams;
+        return !$this->checkEmpty($this->app->getAppSecret());
     }
 
-    protected function getNotifyUrl(array $params)
+    protected function getRequestBody(array $data) : string
     {
-        if (!empty($params['_notify_url'])) {
-            return $params['_notify_url'];
+        if(empty($data)) {
+            return '';
         }
 
-        return $this->app->config->get('notify_url', '');
-    }
-
-    protected function getReturnUrl(array $params)
-    {
-        if (!empty($params['_return_url'])) {
-            return $params['_return_url'];
+        $app_secret = $this->app->getAppSecret();
+        $content = json_encode($data, JSON_UNESCAPED_UNICODE);
+        if(empty($app_secret)) {
+            return $content;
         }
 
-        return $this->app->config->get('return_url', '');
+        $screct_key = base64_decode($app_secret);
+        $str = Utils::addPKCS7Padding($content);
+        $iv = str_repeat("\0", 16);
+        $encrypt_str = openssl_encrypt($str, 'aes-128-cbc', $screct_key, OPENSSL_NO_PADDING, $iv);
+        return base64_encode($encrypt_str);
     }
 
     protected function getAppAuthToken(array $params)
@@ -220,35 +251,29 @@ class HttpClient implements HttpClientInterface
         return $this->app->config->get('app_auth_token', '');
     }
 
+    public function getSysAlipayRequestId(): string
+    {
+        return time().$this->application->getApp()->getAppId();
+    }
+
     /**
-     * 获取签名字符
-     * @param array $params 需要签名的数据
+     * 获取时间戳（毫秒）
+     *
      * @return string
      */
-    private function getSign(array $params) : string
+    public function getCurrentMilis(): string
     {
-        ksort($params);
-        $stringToBeSigned = "";
-        $i = 0;
-        foreach ($params as $k => $v) {
-            if (!empty($v) && !str_starts_with((string)$v, "@")) {
+        $timeInfo = explode(' ', microtime());
+        return sprintf('%d%03d', $timeInfo[1], $timeInfo[0] * 1000);
+    }
 
-                if ($i == 0) {
-                    $stringToBeSigned .= "$k" . "=" . "$v";
-                } else {
-                    $stringToBeSigned .= "&" . "$k" . "=" . "$v";
-                }
-                $i++;
-            }
-        }
-        unset ($k, $v);
-
-        $res = "-----BEGIN RSA PRIVATE KEY-----\n" .
-            wordwrap($this->app->getAppPrivateKey(), 64, "\n", true) .
-            "\n-----END RSA PRIVATE KEY-----";
-
-        openssl_sign($stringToBeSigned, $sign, $res, OPENSSL_ALGO_SHA256);
-
-        return base64_encode($sign);
+    public function createUuid() : string
+    {
+        $chars = md5(uniqid((string)mt_rand(), true));
+        return substr($chars, 0, 8) . '-'
+            . substr($chars, 8, 4) . '-'
+            . substr($chars, 12, 4) . '-'
+            . substr($chars, 16, 4) . '-'
+            . substr($chars, 20, 12);
     }
 }

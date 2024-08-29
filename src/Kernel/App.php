@@ -69,4 +69,9 @@ class App implements AppInterface
     {
         return $this->config->get('alipayRootCertPath');
     }
+
+    public function getAppSecret(): string
+    {
+        return $this->config->get('appSecret', '');
+    }
 }

@@ -7,7 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 
 interface AlipayResponseInterface
 {
-    public function getResponse(): ResponseInterface;
+    public function getRawContent(): string;
 
     /**
      * 只返回业务字段
@@ -20,4 +20,8 @@ interface AlipayResponseInterface
      * @return array
      */
     public function getRawData() : array;
+
+    public function getStatusCode() : int;
+
+    public function isSuccess() : bool;
 }

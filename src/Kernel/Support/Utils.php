@@ -74,4 +74,35 @@ class Utils
         }
         return $ssl;
     }
+
+    /**
+     * 填充算法
+     * @param string $source
+     * @return string
+     */
+    public static function addPKCS7Padding(string $source) : string
+    {
+        $source = trim($source);
+        $block = 16;
+
+        $pad = $block - (strlen($source) % $block);
+        if ($pad <= $block) {
+            $char = chr($pad);
+            $source .= str_repeat($char, $pad);
+        }
+        return $source;
+    }
+
+    /**
+     * 移去填充算法
+     * @param string $source
+     * @return string
+     */
+    public static function stripPKSC7Padding(string $source) : string
+    {
+        $char = substr($source, -1);
+        $num = ord($char);
+        if ($num == 62) return $source;
+        return substr($source, 0, -$num);
+    }
 }

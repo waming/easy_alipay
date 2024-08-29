@@ -15,6 +15,12 @@ interface AppInterface
     public function getAppId(): string;
 
     /**
+     * 加密密钥
+     * @return string
+     */
+    public function getAppSecret(): string;
+
+    /**
      * 应用私钥
      * @return string
      */
