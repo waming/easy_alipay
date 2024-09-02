@@ -20,22 +20,16 @@ class ApplicationTest extends TestCase
 
     public function testApplication()
     {
-        $application = new Application($this->miniConfig);
-        $this->assertEquals('9021000131661049', $application->getApp()->getAppId());
-
-        $request = $application->getRequest();
-        $this->assertEquals('GET', $request->getMethod());
+        $application = new Application($this->config);
+        $this->assertEquals('9021000131660113', $application->getApp()->getAppId());
 
         $client = $application->getHttpClient();
-        $data['out_trade_no'] = '20230102111111';
-        $data['total_amount'] = '0.01';
-        $data['subject'] = '0.01';
-        $data['product_code'] = 'JSAPI_PAY';
-        $data['op_app_id'] = '9021000131661049';
-        $data['buyer_id'] = '2088722020822894';
+        $data['grant_type'] = 'authorization_code';
+        $data['code'] = '20230102111111';
 
-        $response = $client->post('/v3/alipay/trade/create', $data);
+        $response = $client->post('/v3/alipay/system/oauth/token', $data);
         $result  = $response->getData();    //json_decode后去除验签的数据
+        var_dump($result);
         $this->assertNotNull($result, 'not empty');
         $this->assertSame(true, $response->isSuccess(), 'ok1');
         $this->assertSame(200, $response->getStatusCode(), 'ok2');
