@@ -53,13 +53,27 @@ class Notify
      */
     protected function verify(string $signContent, string $sign, string $signType) : void
     {
-        $public = $this->application->getConfig()->get('alipayPublicCertPath');
+        if ("RSA2" !== $signType) {
+            throw new InvalidConfigException("signType只支持RSA2", 400);
+        }
 
-        if(empty($public)) {
+        $alipayPublicKey      = $this->application->getConfig()->get('alipayPublicKey');
+        $alipayPublicCertPath = $this->application->getConfig()->get('alipayPublicCertPath');
+
+        if(empty($alipayPublicKey) && empty($alipayPublicCertPath)) {
             throw new InvalidConfigException('Missing Alipay Config[alipayPublicCertPath].', 400);
         }
 
-        $result = (openssl_verify($signContent, $sign, getPublicCert($public),OPENSSL_ALGO_SHA256) === 1);
+        if(empty($alipayPublicCertPath)) {
+            $res = "-----BEGIN PUBLIC KEY-----\n" .
+                wordwrap($alipayPublicKey, 64, "\n", true) .
+                "\n-----END PUBLIC KEY-----";
+        } else {
+            $pubKey = file_get_contents($alipayPublicCertPath);
+            $res    = openssl_get_publickey($pubKey);
+        }
+
+        $result = (openssl_verify($signContent, $sign, $res,OPENSSL_ALGO_SHA256) === 1);
 
         if (!$result) {
             throw new InvalidResponseException('Fail sign', 501);
