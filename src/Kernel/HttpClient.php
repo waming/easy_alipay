@@ -136,7 +136,7 @@ class HttpClient implements HttpClientInterface
      */
     protected function sign(string $method, string $apiName, array $data) : string
     {
-        $app_cert_no = Utils::getAppCertSN($this->app->getAppPublicCertPath());
+        $app_cert_no = empty($this->app->getAppPublicCertPath()) ? '' : Utils::getAppCertSN($this->app->getAppPublicCertPath());
         $nonce     = $this->createUuid();
         $timestamp = $this->getCurrentMilis();
         $httpRequestBody = $this->getRequestBody($data);

@@ -43,7 +43,7 @@ class App implements AppInterface
      */
     public function getAlipayPublicKey(): string
     {
-        return $this->config->get('alipayPublicKey');
+        return $this->config->get('alipayPublicKey', '');
     }
 
     /**
@@ -51,7 +51,7 @@ class App implements AppInterface
      */
     public function getAppPublicCertPath(): string
     {
-        return $this->config->get('appPublicCertPath');
+        return $this->config->get('appPublicCertPath', '');
     }
 
     /**
@@ -59,7 +59,7 @@ class App implements AppInterface
      */
     public function getAlipayPublicCertPath(): string
     {
-        return $this->config->get('alipayPublicCertPath');
+        return $this->config->get('alipayPublicCertPath', '');
     }
 
     /**
@@ -67,7 +67,7 @@ class App implements AppInterface
      */
     public function getAlipayRootCertPath(): string
     {
-        return $this->config->get('alipayRootCertPath');
+        return $this->config->get('alipayRootCertPath', '');
     }
 
     public function getAppSecret(): string

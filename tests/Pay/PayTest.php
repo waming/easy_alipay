@@ -35,7 +35,7 @@ class PayTest extends TestCase
 
     public function testAlipayTradeCreateApi()
     {
-        $application = new Application($this->miniConfig);
+        $application = new Application($this->config);
         $client = $application->getHttpClient();
 
         $object['out_trade_no'] = 'test.123'.time();
@@ -45,12 +45,11 @@ class PayTest extends TestCase
         $object['buyer_id']     = '2088722020890152';
         $object['op_app_id']    = '9021000131659150';
 
-        $requestData = ['biz_content' => $object];
-        $response = $client->post('alipay.trade.create', $requestData);
-        $data     = $response->getData();
-
-        $this->assertSame('10000', $data['code'], 'ok');
-        $this->assertSame($object['out_trade_no'], $data['out_trade_no'], 'ok');
+        $response = $client->post('/v3/alipay/trade/create', $object);
+        $result   = $response->getData();
+        $this->assertNotNull($result, 'not empty');
+        $this->assertSame(true, $response->isSuccess(), 'ok1');
+        $this->assertSame(200, $response->getStatusCode(), 'ok2');
     }
 
     /**

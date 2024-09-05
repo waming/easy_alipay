@@ -52,11 +52,7 @@ class AlipayResponse implements AlipayResponseInterface
         $nonce        = $this->response->getHeaderLine('alipay-nonce');
         $content      = $this->rawContent;
 
-        //读取公钥文件
-        $pubKey = file_get_contents($this->application->getApp()->getAlipayPublicCertPath());
-        //转换为openssl格式密钥
-        $res = openssl_get_publickey($pubKey);
-
+        $res = openssl_get_publickey($this->getAlipayPublicKey());
         $content = $timestamp . "\n"
                     . $nonce . "\n"
                     . $content . "\n";
@@ -68,6 +64,19 @@ class AlipayResponse implements AlipayResponseInterface
         }
 
         return true;
+    }
+
+    protected function getAlipayPublicKey() : string
+    {
+        $pubKey = $this->application->getApp()->getAlipayPublicKey();
+        if(empty($pubKey)) {
+            $pubKey = file_get_contents($this->application->getApp()->getAlipayPublicCertPath());
+        } else {
+            $pubKey = "-----BEGIN PUBLIC KEY-----\n" .
+                wordwrap($pubKey, 64, "\n", true) .
+                "\n-----END PUBLIC KEY-----";
+        }
+        return $pubKey;
     }
 
     /**
