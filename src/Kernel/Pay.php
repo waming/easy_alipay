@@ -5,9 +5,12 @@ namespace Honghm\EasyAlipay\Kernel;
 use Honghm\EasyAlipay\Kernel\Contract\ApplicationInterface;
 use Honghm\EasyAlipay\Kernel\Exception\InvalidConfigException;
 use Honghm\EasyAlipay\Kernel\Support\Utils;
+use Honghm\EasyAlipay\Kernel\Contract\AppInterface;
 
 class Pay
 {
+    protected AppInterface $app;
+
     public function __construct(protected ApplicationInterface $application)
     {
         $this->app = $this->application->getApp();
